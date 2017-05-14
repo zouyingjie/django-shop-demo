@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>商品列表</title>
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link href="{% static 'css/reset.css' %}" rel="stylesheet">
+    <link href="{% static 'css/animate.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+
+</head>
+<body>
+<div class="container" style="margin-bottom: 24px">
+
+    <div class="row">
+
+        <div class="col-md-12">
+
+            {% if request.user.is_authenticated %}
+                <div class="col-md-6 col-md-offset-6">
+                    <div class="col-md-2" id="user_name"><a
+                            href="#">{{ request.user.username }}</a>&nbsp;|
+                    </div>
+                    &nbsp;
+                    <a href="#">我的订单</a>&nbsp;|&nbsp;
+                    <a href="{% url "shopping:coupon_page" %}">领取优惠券</a>&nbsp;|&nbsp;
+                    <a role="presentation" class="active" href="{% url 'shopping:my_cart' %}">我的购物车 <span
+                            class="badge">{{ cart_items|length }}</span></a>&nbsp;|&nbsp;
+                    <a href="{% url 'shopping:logout' %}">退出</a>
+                </div>
+            {% else %}
+                <div class=" col-md-offset-8 col-md-4">
+                    <a href="{% url 'shopping:login' %}" style="text-decoration: none; color: lightgrey">您好，请登录</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="{% url 'shopping:register' %}" style="text-decoration: none;color: red">免费注册</a>
+                </div>
+            {% endif %}
+        </div>
+        {% for commodity in commoditys.object_list %}
+
+            <div class="col-xs-6 col-md-4" style="margin-top: 25px;height: 360px">
+                <a href="{% url 'shopping:commdity_detail' commodity.commodity_id %}" style="text-decoration: none">
+                    <img height="240px" src="{{ commodity.pic1 }}">
+                    <h3 align="center" style="color: red">￥ {{ commodity.price }}</h3>
+                    <h3 align="center" style="color: black">{{ commodity.title }}</h3>
+                </a>
+                <button commodity_id="{{ commodity.commodity_id }}"
+                        class="add_commodity col-md-12 btn btn-warning center" style="margin-top: 6px;">加入购物车
+                </button>
+            </div>
+        {% endfor %}
+
+        <div class="col-md-12">
+            <div class="pageturn">
+                <ul class="pagelist">
+
+                    {% if commoditys.has_previous %}
+                        <li class="long"><a
+                                href="?{{ commoditys.previous_page_number.querystring }}"
+                                class="prev">&lsaquo;&lsaquo;上一页</a>
+                        </li>
+                    {% endif %}
+                    {% for page in commoditys.pages %}
+                        {% if page %}
+                            {% ifequal page commoditys.number %}
+                                <li class="active"><a class=" current page"
+                                                      href="">{{ page }}</a>
+                                </li>
+                            {% else %}
+                                <li><a href="?{{ page.querystring }}" class="page">{{ page }}</a></li>
+                            {% endifequal %}
+                        {% else %}
+                            <li class="none"><a href="">...</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if commoditys.has_next %}
+                        <li class="long"><a href="?{{ commoditys.next_page_number.querystring }}"
+                                            class="next"> 下一页&rsaquo;&rsaquo;</a></li>
+                    {% endif %}
+
+
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $("button.add_commodity").bind("click", function () {
+            var commodity_id = $(this).attr("commodity_id");
+            if ($('#user_name').text() != '') {
+                $.ajax({
+                    url: "{% url "shopping:add_commodity" %}",
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {'commodity_id': commodity_id},
+                    success: function (arg) {
+                        alert("添加成功")
+                    }
+                });
+
+            } else {
+                alert("请先登录")
+            }
+        }
+    )
+    ;
+</script>
+<script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
+</body>
+</html>

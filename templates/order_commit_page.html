@@ -1,0 +1,334 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>订单提交</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/bootstrap-spinner.css' %}" rel="stylesheet">
+    <link href="{% static 'css/jquery-ui.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/cart_spinner.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+    <script src="{% static 'js/jquery-ui.min.js' %}"></script>
+
+</head>
+<body style="padding-bottom: 70px;">
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-12">
+            {% if request.user.is_authenticated %}
+                <div class="col-md-6 col-md-offset-6">
+                    <a href="{% url 'shopping:commdity_list' %}">首页</a>
+                    <b>{{ request.user.username }}</b>&nbsp;|&nbsp;
+                    <a href="{% url 'shopping:logout' %}">退出</a>
+                </div>
+            {% else %}
+                <div class=" col-md-offset-8 col-md-4">
+                    <a href="{% url 'shopping:login' %}" style="text-decoration: none; color: lightgrey">您好，请登录</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="{% url 'shopping:register' %}" style="text-decoration: none;color: red">免费注册</a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-12"
+             style="background: cornsilk;height: 48px;text-align: left; margin-top: 24px;margin-bottom: 24px">
+
+            <div class="col-md-5">
+                <div class="col-md-12">
+                    <strong style="margin-left: 10px">商品</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>单价</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>数量</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>小计</strong>
+                </div>
+            </div>
+
+        </div>
+        {% for cart_item in cart_items %}
+            <div class="col-md-12" style="border: 1px solid #6699cc;" commodity_id= {{ cart_item.commodity_id }}>
+                <div class="col-md-5">
+                    <div class="col-md-2">
+                        <a href="{% url 'shopping:commdity_detail' cart_item.commodity_id %}"> <img
+                                style="margin:2px;border: 1px solid lightgrey" src="{{ cart_item.pic1 }}" width="80"
+                                height="90"></a>
+                    </div>
+                    <div class="col-md-9 col-md-offset-1" style="text-align: left">
+                        <a href="{% url 'shopping:commdity_detail' cart_item.commodity_id %}"
+                           style="text-decoration: none;color: #464646"><strong>{{ cart_item.title }}</strong></a>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="col-md-12">
+                        <strong class="pices">{{ cart_item.price }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="col-md-12">
+                        <span>{{ cart_item.quantity }}</span></div>
+                </div>
+                <div class="col-md-1">
+                    <div class="col-md-12">
+                        <strong class="total_price">{{ cart_item.total_price }}</strong>
+                    </div>
+                </div>
+
+            </div>
+        {% endfor %}
+
+        <div class="col-md-12 navbar-default navbar-fixed-bottom" style="margin-top: 12px;">
+            <div class="col-md-2 col-md-offset-5" style="text-align: center">
+                总价 ：￥<span id="cart_checked_total_price"
+                           style="color: red; text-decoration-style: solid">0</span>
+                <div>已优惠<strong id="discount_price">0</strong>元</div>
+                <div>共 {{ cart_items|length }} 件</div>
+            </div>
+            {% if coupons|length > 0 %}
+                <div class="col-md-2">
+                    <form role="form">
+                        <div class="form-group">
+                            <select class="form-control" id="coupon_select" onchange="couponChange()">
+                                <option coupon_id="*"
+                                        coupon_type="*">选择使用优惠券
+                                </option>
+                                {% for coupon in coupons %}
+                                    <option coupon_id="{{ coupon.coupon_id }}"
+                                            coupon_type="{{ coupon.strategy_type }}">{{ coupon.strategy_desc }}</option>
+                                {% endfor %}
+
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+
+            <div class="col-md-2 " style="vertical-align: middle">
+
+                <button id="order_commit" class="col-md-6 btn btn-danger">提交订单</button>
+                <a href="{% url 'shopping:order_cancel' %}">
+                    <button id="order_cancel" class="col-md-4 col-md-offset-1 btn ">取消</button>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    // 设置商品总价
+    var all_total_price = 0.0
+    var discount_price = 0.0
+    $('.total_price').each(function () {
+        all_total_price = accAdd(all_total_price, $(this).text())
+    })
+    $('#cart_checked_total_price').text(all_total_price)
+
+    //订单提交操作
+    $('#order_commit').bind('click', function () {
+        coupon_id = $('#coupon_select').find("option:selected").attr("coupon_id")
+
+        // 模拟表单提交
+        var temp = document.createElement("form");
+        temp.action = "{% url 'shopping:order_commit_operation' %}";
+        temp.method = "post";
+        temp.style.display = "none";
+
+        var input_coupon_id = document.createElement('input')
+        input_coupon_id.type = "text"
+        input_coupon_id.name = "coupon_id"
+        input_coupon_id.value = coupon_id
+        temp.appendChild(input_coupon_id);
+
+        var input_total_price = document.createElement('input')
+        input_total_price.type = "text"
+        input_total_price.name = "total_price"
+        input_total_price.value = all_total_price
+        temp.appendChild(input_total_price);
+
+        var input_discount_price = document.createElement('input')
+        input_discount_price.type = "text"
+        input_discount_price.name = "discount_price"
+        input_discount_price.value = discount_price
+        temp.appendChild(input_discount_price);
+        document.body.appendChild(temp);
+        temp.submit();
+    })
+
+
+    //监听优惠券选择，修改优惠金额和总金额
+    function couponChange() {
+        var couponSelect = $('#coupon_select')
+
+        coupon_type = couponSelect.find("option:selected").attr('coupon_type')
+
+        switch (coupon_type) {
+            case '1': //88 折
+                discount_price = mul(all_total_price, 0.88)
+                $('#discount_price').text(accSub(all_total_price, discount_price))
+                $('#cart_checked_total_price').text(discount_price)
+                break
+            case '2': //满100减30
+                if (all_total_price > 100) {
+                    discount_price = 30
+                    $('#discount_price').text(30)
+                    $('#cart_checked_total_price').text(accSub(all_total_price, 30))
+                } else {
+                    couponSelect.find("option").eq(0).prop("selected", true)
+                    $('#cart_checked_total_price').text(all_total_price)
+                    $('#discount_price').text(0.0)
+                    alert("价格不足100，无法使用优惠券，请继续买买买！")
+                }
+                break
+            case '3'://满200减100
+                if (all_total_price > 200) {
+                    discount_price = 100
+                    $('#discount_price').text(100)
+                    $('#cart_checked_total_price').text(accSub(all_total_price, 100))
+                } else {
+                    couponSelect.find("option").eq(0).prop("selected", true)
+                    $('#cart_checked_total_price').text(all_total_price)
+                    $('#discount_price').text(0.0)
+                    alert("价格不足200，无法使用优惠券，请继续买买买！")
+                }
+                break
+            case '4'://满300送150
+                if (all_total_price > 300) {
+                    alert("您可以继续免费选购价值150元的商品，赶紧行动吧！")
+                } else {
+                    couponSelect.find("option").eq(0).prop("selected", true)
+                    $('#cart_checked_total_price').text(all_total_price)
+                    $('#discount_price').text(0.0)
+                    alert("价格不足300，无法使用优惠券，请继续买买买！")
+                }
+                break
+            case '*':
+                $('#cart_checked_total_price').text(all_total_price)
+                $('#discount_price').text(0.0)
+                console.log("*")
+                break
+
+        }
+
+    }
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+
+    /**
+     * 加法操作，避免实数的误差
+     * @param arg1
+     * @param arg2
+     * @returns {number}
+     */
+    function accAdd(arg1, arg2) {
+        var r1, r2, m;
+        try {
+            r1 = arg1.toString().split(".")[1].length
+        } catch (e) {
+            r1 = 0
+        }
+        try {
+            r2 = arg2.toString().split(".")[1].length
+        } catch (e) {
+            r2 = 0
+        }
+        m = Math.pow(10, Math.max(r1, r2))
+        return (arg1 * m + arg2 * m) / m
+    }
+
+
+    /**
+     * 用来得到精确的减法结果
+     * javascript的加法结果会有误差，在两个浮点数相加的时候会比较明显。这个函数返回较为精确的减法结果。
+     * @param arg1
+     * @param arg2
+     * @returns {string} arg1减去arg2的精确结果
+     */
+    function accSub(arg1, arg2) {
+        var r1, r2, m, n;
+        try {
+            r1 = arg1.toString().split(".")[1].length
+        } catch (e) {
+            r1 = 0
+        }
+        try {
+            r2 = arg2.toString().split(".")[1].length
+        } catch (e) {
+            r2 = 0
+        }
+        m = Math.pow(10, Math.max(r1, r2));
+        //last modify by deeka
+        //动态控制精度长度
+        n = (r1 >= r2) ? r1 : r2;
+        return ((arg1 * m - arg2 * m) / m).toFixed(2);
+    }
+
+    /*
+     函数：乘法函数，用来得到精确的乘法结果
+     说明：函数返回较为精确的乘法结果。
+     参数：arg1：第一个乘数；arg2第二个乘数；d要保留的小数位数（可以不传此参数，如果不传则不处理小数位数)
+     调用：Calc.Mul(arg1,arg2)
+     返回值：两数相乘的结果
+     */
+    function mul(arg1, arg2) {
+        var r1 = arg1.toString(), r2 = arg2.toString(), m, resultVal, d = arguments[1];
+        m = (r1.split(".")[1] ? r1.split(".")[1].length : 0) + (r2.split(".")[1] ? r2.split(".")[1].length : 0);
+        resultVal = Number(r1.replace(".", "")) * Number(r2.replace(".", "")) / Math.pow(10, m);
+        return typeof d !== "number" ? Number(resultVal) : Number(resultVal.toFixed(parseInt(2)));
+    }
+
+    /*
+     函数：除法函数，用来得到精确的除法结果
+     说明：函数返回较为精确的除法结果。
+     参数：arg1：除数；arg2被除数；d要保留的小数位数（可以不传此参数，如果不传则不处理小数位数)
+     调用：Calc.Div(arg1,arg2)
+     返回值：arg1除于arg2的结果
+     */
+    function div(arg1, arg2) {
+        var r1 = arg1.toString(), r2 = arg2.toString(), m, resultVal, d = arguments[2];
+        m = (r2.split(".")[1] ? r2.split(".")[1].length : 0) - (r1.split(".")[1] ? r1.split(".")[1].length : 0);
+        resultVal = Number(r1.replace(".", "")) / Number(r2.replace(".", "")) * Math.pow(10, m);
+        return typeof d !== "number" ? Number(resultVal) : Number(resultVal.toFixed(parseInt(d)));
+    }
+</script>
+<script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/reset.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+    <title>登录</title>
+</head>
+<body>
+<div class="bg" id="dialogBg"></div>
+<header>
+    <div class="c-box fff-box">
+        <div class="wp header-box">
+            <p class="fl hd-tips">买买买购物小商城！</p>
+            <ul class="fr hd-bar">
+                <li>服务电话：<span>33333333</span></li>
+            </ul>
+        </div>
+    </div>
+</header>
+<section>
+    <div class="c-box bg-box">
+        <div class="login-box clearfix">
+            <div class="hd-login clearfix">
+                <h1>用户登录</h1>
+                <a class="index-font" href="{% url 'shopping:commdity_list' %}">回到首页</a>
+            </div>
+            <div class="fl slide">
+                <div class="imgslide">
+                    <ul class="imgs">
+                        <li><a href=""><img width="483" height="472" src="{% static 'images/slide1.jpg' %}"/></a></li>
+                        <li><a href=""><img width="483" height="472" src="{% static 'images/slide2.jpg' %}"/></a></li>
+                        <li><a href=""><img width="483" height="472" src="{% static 'images/slide3.jpg' %}"/></a></li>
+                    </ul>
+                </div>
+                <div class="unslider-arrow prev"></div>
+                <div class="unslider-arrow next"></div>
+            </div>
+            <div class="fl form-box">
+                <h2>帐号登录</h2>
+                <form action="{% url "shopping:login" %}" method="post" autocomplete="off">
+                    {% csrf_token %}
+                    <input type='hidden' name='csrfmiddlewaretoken' value='mymQDzHWl2REXIfPMg2mJaLqDfaS1sD5'/>
+                    <div class="form-group marb20 {% if login_form.errors.username %}errorput{% endif %}">
+
+                        <label>邮&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;箱</label>
+                        <input name="useremail" id="account_l" type="text" placeholder="邮箱"/>
+                    </div>
+                    <div class="form-group marb8  {% if login_form.errors.password %}errorput{% endif %}">
+                        <label>密&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;码</label>
+                        <input name="password" id="password_l" type="password" placeholder="请输入您的密码"/>
+                    </div>
+                    <div class="error btns login-form-tips" id="jsLoginTips">
+                        {% for key,error in login_form.errors.items %}
+                            {{ error }}
+                        {% endfor %}{{ msg }}</div>
+                    <div class="auto-box marb38">
+
+                        <a class="fr" href="#">忘记密码？</a>
+                    </div>
+                    <input class="btn btn-green" id="jsLoginBtn" type="submit" value="立即登录 > "/>
+                    <input type='hidden' name='csrfmiddlewaretoken' value='5I2SlleZJOMUX9QbwYLUIAOshdrdpRcy'/>
+                    {% csrf_token %}
+                </form>
+                <p class="form-p">没有小商城帐号？<a href="{% url 'shopping:register' %}">[立即注册]</a></p>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="/static/js/jquery.min.js" type="text/javascript"></script>
+<script src="{% static 'js/unslider.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/login.js' %}" type="text/javascript"></script>
+</body>
+</html>

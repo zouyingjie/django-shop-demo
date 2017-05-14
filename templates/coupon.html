@@ -1,0 +1,187 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>活动购物券</title>
+
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+    <style>
+        .coupon_href {
+            display: block;
+            overflow: hidden;
+            width: 290px;
+            height: 126px;
+            background: url(https://img.alicdn.com/imgextra/i2/11193727/TB24tQIgFXXXXb7XXXXXXXXXXXX-11193727.png) no-repeat 50% 50%;
+            text-decoration: none;
+
+        }
+
+        .coupon_div {
+            overflow: hidden;
+            text-align: center;
+            align-items: center;
+            height: auto;
+            background: #ffc801;
+            font-family: 微软雅黑;
+            margin: 12px;
+
+        }
+
+        .coupon_title {
+            height: 28px;
+            line-height: 28px;
+            display: block;
+            overflow: hidden;
+            margin: 0 10px;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .coupon_num {
+            display: block;
+            margin: 12px 10px 0 10px;
+            height: 36px;
+            line-height: 36px;
+            overflow: hidden;
+            color: #ec0112;
+            font-family: Impact;
+            font-size: 40px;
+        }
+
+        .coupon_desc {
+            font-size: 18px;
+            font-family: 微软雅黑;
+        }
+
+        .coupon_take {
+            display: block;
+            margin: 10px auto;
+            width: 85px;
+            height: 20px;
+            line-height: 20px;
+            overflow: hidden;
+            background: #ee5600;
+            color: #fff;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12" style="margin-top: 12px">
+
+            {% if request.user.is_authenticated %}
+                <div class="col-md-7 col-md-offset-6">
+                    <div class="col-md-2" id="user_name"><a
+                            href="{% url "shopping:commdity_list" %}">商品列表</a>&nbsp;|
+                    </div>
+                    <div class="col-md-2" id="user_name"><a
+                            href="">{{ request.user.username }}</a>&nbsp;|
+                    </div>
+                    <a href="{% url 'shopping:logout' %}">退出</a>
+                </div>
+            {% else %}
+                <div class=" col-md-offset-8 col-md-4">
+                    <a href="{% url 'shopping:login' %}" style="text-decoration: none; color: lightgrey">您好，请登录</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="{% url 'shopping:register' %}" style="text-decoration: none;color: red">免费注册</a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-12" style="background: whitesmoke;margin: 12px;height: 4px">
+
+        </div>
+        <div class="col-md-12">
+            <div class='col-md-5 coupon_div'>
+                <a class="coupon_href col-md-12" target="_blank" coupon_type="2">
+                    <span class="coupon_title">满100减30</span>
+                    <span class="coupon_num">30&nbsp;<span class="coupon_desc">元优惠券</span></span> <span
+                        class="coupon_take">立即领取</span>
+                </a>
+            </div>
+
+            <div class='col-md-5 coupon_div'>
+                <a class="coupon_href col-md-12" target="_blank" coupon_type="3">
+                    <span class="coupon_title">满200减100</span>
+                    <span class="coupon_num"> 100&nbsp;<span class="coupon_desc">元优惠券</span></span> <span
+                        class="coupon_take">立即领取</span>
+                </a>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class='col-md-5 coupon_div'>
+                <a class="coupon_href col-md-12" target="_blank" coupon_type="4">
+                    <span class="coupon_title">满300送150</span>
+                    <span class="coupon_num">150&nbsp;<span
+                            class="coupon_desc">元优惠券</span></span> <span
+                        class="coupon_take">立即领取</span>
+                </a>
+            </div>
+
+             <div class='col-md-5 coupon_div'>
+                <a class="coupon_href col-md-12" target="_blank" coupon_type="1">
+                    <span class="coupon_title">全场折扣券</span>
+                    <span class="coupon_num">88<span
+                            class="coupon_desc">折</span></span> <span
+                        class="coupon_take">立即领取</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    $('.coupon_href').bind('click', function () {
+        $.ajax({
+            url: "{% url 'shopping:take_coupon' %}",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                'type': $(this).attr('coupon_type')
+            },
+            success: function (data) {
+                if (data['statue'] == 200) {
+                    alert("领取成功，赶紧去买买买吧！")
+                } else {
+                    alert('抱歉，您来晚啦！已被领完！')
+                }
+
+            }
+
+        })
+    })
+</script>
+<script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+</body>
+</html>

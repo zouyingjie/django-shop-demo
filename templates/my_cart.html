@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>我的购物车</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css">
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/bootstrap-spinner.css' %}" rel="stylesheet">
+    <link href="{% static 'css/jquery-ui.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/cart_spinner.css' %}" rel="stylesheet">
+    <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
+    <script src="{% static 'js/jquery-ui.min.js' %}"></script>
+
+</head>
+<body style="padding-bottom: 70px;">
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-12">
+            {% if request.user.is_authenticated %}
+                <div class="col-md-6 col-md-offset-6">
+                    <a href="{% url 'shopping:commdity_list' %}">首页</a>
+                    <b>{{ request.user.username }}</b>&nbsp;|&nbsp;
+                    <a href="{% url 'shopping:logout' %}">退出</a>
+                </div>
+            {% else %}
+                <div class=" col-md-offset-8 col-md-4">
+                    <a href="{% url 'shopping:login' %}" style="text-decoration: none; color: lightgrey">您好，请登录</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="{% url 'shopping:register' %}" style="text-decoration: none;color: red">免费注册</a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-12"
+             style="background: cornsilk;height: 48px;text-align: left; margin-top: 24px;margin-bottom: 24px">
+            <div class="col-md-2">
+                <div class="col-md-12" id="select_all">
+                    <input type="checkbox" class="select_all">全选
+
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="col-md-12">
+                    <strong style="margin-left: 10px">商品</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>单价</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>数量</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>小计</strong>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="col-md-12">
+                    <strong>操作</strong>
+                </div>
+            </div>
+        </div>
+        {% for cart_item in cart_items %}
+            <div class="col-md-12 cart_item" style="border: 1px solid #6699cc;"
+                 commodity_id="{{ cart_item.commodity_id }}"
+                 cart_item_id="{{ cart_item.id }}">
+                <div class="col-md-2">
+                    <div class="col-md-12">
+                        <input type="checkbox" name='cart_item_check' class="cart_item_check"
+                               commodity_id="{{ cart_item.commodity_id }}"
+                               value="{{ cart_item.commodity_id }}">
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="col-md-2">
+                        <a href="{% url 'shopping:commdity_detail' cart_item.commodity_id %}"> <img
+                                style="margin:2px;border: 1px solid lightgrey" src="{{ cart_item.pic1 }}" width="80"
+                                height="90"></a>
+                    </div>
+                    <div class="col-md-9 col-md-offset-1" style="text-align: left">
+                        <a href="{% url 'shopping:commdity_detail' cart_item.commodity_id %}"
+                           style="text-decoration: none;color: #464646"><strong>{{ cart_item.title }}</strong></a>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="col-md-12">
+                        <strong class="pices">{{ cart_item.price }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <div class="num"><span class="reduc">&nbsp;-&nbsp;</span><input class='cart_item_quantity'
+                                                                                    type="text"
+                                                                                    value="{{ cart_item.quantity }}"/><span
+                            href="#"
+                            class="add">&nbsp;+</span></div>
+                </div>
+                <div class="col-md-1">
+                    <div class="col-md-12">
+                        <strong class="total_price">{{ cart_item.total_price }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="col-md-12">
+                        <button class="delete_cartitem btn-link" commodity_id='{{ cart_item.commodity_id }}'>删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-md-12">还没有商品，赶紧选购吧</div>
+        {% endfor %}
+        <div class="col-md-12 navbar-default navbar-fixed-bottom" style="margin-top: 12px">
+
+            <div class="col-md-2 col-md-offset-6" style="text-align: center">
+                总价 ：￥<strong id="cart_checked_total_price"
+                             style="color: red; text-decoration-style: solid">0</strong>
+                <div>已选 <strong id="check_num">0</strong>件</div>
+            </div>
+            <div class="col-md-2 col-md-offset-1" style="vertical-align: middle">
+                <button id="cart_account" class="col-md-12 btn btn-danger">结算</button>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+    /**
+     * 购物车删除商品
+     */
+    $('button.delete_cartitem').bind('click', function () {
+        var commodity_id = $(this).attr("commodity_id")
+        btn = $(this)
+        $.ajax({
+            url: "{% url 'shopping:del_commodity' %}",
+            type: 'POST',
+            dataType: 'json',
+            data: {'commodity_id': commodity_id},
+            success: function (arg) {
+                alert("商品已从购物车移除")
+                btn.parents(2)[2].remove()
+            },
+            error: function () {
+                alert("删除失败，请重试")
+            }
+        });
+    })
+
+    /**
+     * 结算操作
+     */
+    $('#cart_account').bind('click', function () {
+        var account_items = new Array()
+        $('input:checkbox[class=cart_item_check]:checked').each(function (i) {
+            account_items.push($(this).parents('.cart_item').first().attr('cart_item_id'))
+        })
+        if (account_items.length == 0) {
+            alert("请先选择商品")
+        } else {
+
+            var temp = document.createElement("form");
+            temp.action = "{% url 'shopping:account' %}";
+            temp.method = "post";
+            temp.style.display = "none";
+
+            var opt = document.createElement('input')
+            opt.type = "text"
+            opt.name = "cart_items"
+            opt.value = account_items
+            temp.appendChild(opt);
+            document.body.appendChild(temp);
+            temp.submit();
+
+
+        }
+
+    })
+
+
+    /**
+     * 控制全选
+     */
+    $('#select_all').bind('click', function () {
+        if ($(':checkbox[class=select_all]').is(':checked')) {
+
+
+            $('#cart_checked_total_price').text('0')
+            $('.cart_item_check').each(function (i) {
+                $(this).prop('checked', false)
+            })
+
+            $('.cart_item_check').each(function (i) {
+                $(this).prop('checked', true)
+
+            })
+
+            $('.cart_item_check').each(function (i) {
+                checkedTotalPrice = Number($('#cart_checked_total_price').text())
+                itemTotalPrice = Number($(this).parent().parent().parent().find('strong.total_price').first().text())
+                $('#cart_checked_total_price').text(accAdd(checkedTotalPrice, itemTotalPrice))
+            })
+
+            $('#check_num').text($('.cart_item_check').length)
+        } else {
+
+            $('.cart_item_check').each(function (i) {
+                $(this).prop("checked", false)
+            })
+
+            {#            $('input:checkbox[class=cart_item_check]').each(function (i) {#}
+            {#                $(this).attr('checked', false)#}
+            {#            })#}
+            //取消全部选中
+            $('#cart_checked_total_price').text('0.0')
+            $('#check_num').text(0)
+        }
+    })
+
+    function changePrice() {
+
+    }
+    /**
+     * 选中购物车商品计算已选中的商品总价
+     */
+    $('.cart_item_check').each(function () {
+        $(this).bind('click', function () {
+
+            checkedTotalPrice = Number($('#cart_checked_total_price').text())
+            itemTotalPrice = Number($(this).parent().parent().parent().find('strong.total_price').first().text())
+
+            if ($(this).is(':checked')) {
+                 $(this).prop('checked', true)
+                $('#cart_checked_total_price').text(accAdd(checkedTotalPrice, itemTotalPrice))
+            } else {
+                $(this).removeAttr('checked')
+                $('#cart_checked_total_price').text(accSub(checkedTotalPrice, itemTotalPrice))
+            }
+
+            $('#check_num').text($('.cart_item_check:checked').length)
+        })
+    })
+
+    /**
+     * 添加商品数量
+     */
+    $('.add').each(function () {
+        $(this).bind('click', function () {
+            var quantity = $(this).prev().val();
+            quantity++;
+            commodityId = $(this).parent().parent().parent().attr('commodity_id')
+            //总价
+            totalElement = $(this).parent().parent().next().find('strong').first()
+            //数量
+            itemQuantity = $(this).prev()
+            $.ajax({
+                url: '{% url 'shopping:change_cartitem_quantity' %}',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    'quantity': quantity,
+                    'commodity_id': commodityId,
+                },
+                success: function (data) {
+                    totalElement.text(data['price']);
+                    itemQuantity.val(quantity);
+                },
+            });
+        })
+    })
+    /**
+     * 减少数量操作
+     */
+    $('.reduc').each(function () {
+        $(this).bind('click', function () {
+            var quantity = $(this).next().val();
+            quantity--;
+            if (quantity <= 0) {
+                quantity = 1;
+            }
+
+            commodityId = $(this).parent().parent().parent().attr('commodity_id')
+            //总价
+            totalElement = $(this).parent().parent().next().find('strong').first()
+            //数量
+            itemQuantity = $(this).next()
+            $.ajax({
+                url: '{% url 'shopping:change_cartitem_quantity' %}',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    'quantity': quantity,
+                    'commodity_id': commodityId,
+                },
+                success: function (data) {
+                    totalElement.text(data['price']);
+                    itemQuantity.val(quantity);
+                },
+
+            });
+        })
+    })
+
+    /**
+     * 加法操作，避免实数的误差
+     * @param arg1
+     * @param arg2
+     * @returns {number}
+     */
+    function accAdd(arg1, arg2) {
+        var r1, r2, m;
+        try {
+            r1 = arg1.toString().split(".")[1].length
+        } catch (e) {
+            r1 = 0
+        }
+        try {
+            r2 = arg2.toString().split(".")[1].length
+        } catch (e) {
+            r2 = 0
+        }
+        m = Math.pow(10, Math.max(r1, r2))
+        return (arg1 * m + arg2 * m) / m
+    }
+
+
+    /**
+     * 用来得到精确的减法结果
+     * javascript的加法结果会有误差，在两个浮点数相加的时候会比较明显。这个函数返回较为精确的减法结果。
+     * @param arg1
+     * @param arg2
+     * @returns {string} arg1减去arg2的精确结果
+     */
+    function accSub(arg1, arg2) {
+        var r1, r2, m, n;
+        try {
+            r1 = arg1.toString().split(".")[1].length
+        } catch (e) {
+            r1 = 0
+        }
+        try {
+            r2 = arg2.toString().split(".")[1].length
+        } catch (e) {
+            r2 = 0
+        }
+        m = Math.pow(10, Math.max(r1, r2));
+        //last modify by deeka
+        //动态控制精度长度
+        n = (r1 >= r2) ? r1 : r2;
+        return ((arg1 * m - arg2 * m) / m).toFixed(n);
+    }
+</script>
+<script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
+</body>
+</html>
