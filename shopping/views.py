@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from django.views.generic import View
@@ -23,12 +21,8 @@ class CommodityDetailView(View):
 
     def get(self, request, commodity_id):
         commodity, commodity_info = service.get_commodity_detail_service(commodity_id)
-        user_name = ''
-        if 'user_name' in request.COOKIES:
-            user_name = request.COOKIES['user_name']
-
         return render(request, 'commodity_detail.html',
-                      {'commodity': commodity, 'commodity_info': commodity_info, 'user_name': user_name})
+                      {'commodity': commodity, 'commodity_info': commodity_info, })
 
 
 class CommodityListView(View):
@@ -40,7 +34,6 @@ class CommodityListView(View):
         commoditys = service.get_all_commodity_service(request)
         if request.user.is_authenticated:
             if not request.user.is_superuser:
-
                 user_id = request.user.user_id
                 cart_items = service.check_cart_record_service(user_id)
 
@@ -48,16 +41,8 @@ class CommodityListView(View):
                               {'commoditys': commoditys,
                                'cart_items': cart_items,
                                })
-            else:
-                return render(request, 'commodity_list.html',
-                              {'commoditys': commoditys,
-                               'cart_items': {},
-                               })
-        else:
-            return render(request, 'commodity_list.html',
-                          {'commoditys': commoditys,
-                           'cart_items': {},
-                           })
+
+        return render(request, 'commodity_list.html', {'commoditys': commoditys, 'cart_items': {}, })
 
 
 # TODO: 用户登录注册请求处理
@@ -118,14 +103,19 @@ class RegisterView(View):
 # TODO: 购物车相关请求处理
 class MyCartView(View):
     def get(self, request):
+
+        data = dict()
         if request.user.is_authenticated():
+            if not request.user.is_superuser:
+                user_id = request.user.user_id
+                cart_items = service.check_cart_record_service(user_id)
+                data['cart_items'] = cart_items
+                return render(request, 'my_cart.html', data)
+            else:
+                service.logout(request)
+                return HttpResponseRedirect(reverse("shopping:login"))
 
-            user_id = request.user.user_id
-            cart_items = service.check_cart_record_service(user_id)
 
-            return render(request, 'my_cart.html', {'cart_items': cart_items})
-        else:
-            return render(request, 'my_cart.html', {'cart_items': {}, })
 
 
 class AddToCartView(View):
@@ -194,9 +184,8 @@ class OrderCommitPageView(View):
                               {'cart_items': commit_cart_items, 'coupons': coupons})
             else:
                 service.logout(request)
-                return HttpResponseRedirect(reverse("shopping:login"))
-        else:
-            return HttpResponseRedirect(reverse("shopping:login"))
+
+        return HttpResponseRedirect(reverse("shopping:login"))
 
 
 class OrderCommitOperationView(View):
@@ -261,9 +250,8 @@ class CouponPageView(View):
                 return render(request, 'coupon.html')
             else:
                 service.logout(request)
-                return HttpResponseRedirect(reverse("shopping:login"))
-        else:
-            return HttpResponseRedirect(reverse("shopping:login"))
+
+        return HttpResponseRedirect(reverse("shopping:login"))
 
 
 class TakeCouponViw(View):
@@ -275,14 +263,10 @@ class TakeCouponViw(View):
 
         if request.user.is_authenticated:
             type = request.POST.get('type', "")
-
             if service.take_coupon_service(request.user.user_id, type):
                 return JsonResponse({'statue': '200'})
-            else:
-                return JsonResponse({'statue': '404'})
 
-        else:
-            return JsonResponse({'statue': '404'})
+        return JsonResponse({'statue': '404'})
 
 
 # 全局 404 配置
