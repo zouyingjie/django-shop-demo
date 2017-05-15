@@ -11,8 +11,6 @@ from django.urls import reverse
 from shopping.forms import RegisterForm, LoginForm
 from shopping import service
 
-pwd_key = '20170000acde01892afgh432'
-
 
 # Create your views here.
 
@@ -25,7 +23,6 @@ class CommodityDetailView(View):
 
     def get(self, request, commodity_id):
         commodity, commodity_info = service.get_commodity_detail_service(commodity_id)
-
         user_name = ''
         if 'user_name' in request.COOKIES:
             user_name = request.COOKIES['user_name']
@@ -40,9 +37,7 @@ class CommodityListView(View):
     """
 
     def get(self, request):
-
         commoditys = service.get_all_commodity_service(request)
-
         if request.user.is_authenticated:
             if not request.user.is_superuser:
 
@@ -52,17 +47,17 @@ class CommodityListView(View):
                 return render(request, 'commodity_list.html',
                               {'commoditys': commoditys,
                                'cart_items': cart_items,
-                               'user_id': user_id})
+                               })
             else:
                 return render(request, 'commodity_list.html',
                               {'commoditys': commoditys,
                                'cart_items': {},
-                               'user_id': ""})
+                               })
         else:
             return render(request, 'commodity_list.html',
                           {'commoditys': commoditys,
                            'cart_items': {},
-                           'user_id': ""})
+                           })
 
 
 # TODO: 用户登录注册请求处理
@@ -79,11 +74,10 @@ class LoginView(View):
         if login_form.is_valid():
             useremail = request.POST.get("useremail", "")
             password = request.POST.get("password", "")
-
             user = authenticate(request, username=useremail, password=password)
+
             if user is not None:
                 service.login(request, user)
-
                 return HttpResponseRedirect(reverse("shopping:commdity_list"))
 
             else:
@@ -112,11 +106,11 @@ class RegisterView(View):
 
     def post(self, request):
         register_form = RegisterForm(request.POST)
+
         if register_form.is_valid():
-
             service.register_service(request)
-
             return render(request, 'login.html')
+
         else:
             return render(request, 'register.html', {'register_form': register_form})
 
@@ -125,17 +119,13 @@ class RegisterView(View):
 class MyCartView(View):
     def get(self, request):
         if request.user.is_authenticated():
-            user_id = request.user.user_id
-            username = request.user.username
 
+            user_id = request.user.user_id
             cart_items = service.check_cart_record_service(user_id)
 
-            for cart_item in cart_items:
-                cart_item.total_price = Decimal(str(cart_item.price)) * cart_item.quantity
-
-            return render(request, 'my_cart.html', {'cart_items': cart_items, 'user_name': username})
+            return render(request, 'my_cart.html', {'cart_items': cart_items})
         else:
-            return render(request, 'my_cart.html', {'cart_items': {}, 'user_name': ""})
+            return render(request, 'my_cart.html', {'cart_items': {}, })
 
 
 class AddToCartView(View):
@@ -217,7 +207,6 @@ class OrderCommitOperationView(View):
     def post(self, request):
         if request.user.is_authenticated:
             if not request.user.is_superuser:
-
                 user_id = request.user.user_id
                 coupon_id = request.POST.get('coupon_id', '')
                 total_price = request.POST.get('total_price', '')
@@ -244,7 +233,6 @@ class OrderCancelOperationView(View):
     def get(self, request):
         if request.user.is_authenticated:
             if not request.user.is_superuser:
-
                 # 选出用户购物车中已经被选中的数据项
                 user_id = request.user.user_id
                 service.cancel_order_service(user_id)
@@ -288,7 +276,7 @@ class TakeCouponViw(View):
         if request.user.is_authenticated:
             type = request.POST.get('type', "")
 
-            if service.take_coupon_service(request.user.user_id,type):
+            if service.take_coupon_service(request.user.user_id, type):
                 return JsonResponse({'statue': '200'})
             else:
                 return JsonResponse({'statue': '404'})

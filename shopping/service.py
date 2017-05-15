@@ -64,6 +64,7 @@ def check_cart_record_service(user_id):
     :return:
     """
     cart_items = models.Cart.objects.filter(user_id=user_id)
+
     return cart_items
 
 
