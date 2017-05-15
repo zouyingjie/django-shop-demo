@@ -21,8 +21,7 @@ class CommodityDetailView(View):
 
     def get(self, request, commodity_id):
         commodity, commodity_info = service.get_commodity_detail_service(commodity_id)
-        return render(request, 'commodity_detail.html',
-                      {'commodity': commodity, 'commodity_info': commodity_info, })
+        return render(request, 'commodity_detail.html', {'commodity': commodity, 'commodity_info': commodity_info, })
 
 
 class CommodityListView(View):
@@ -36,11 +35,7 @@ class CommodityListView(View):
             if not request.user.is_superuser:
                 user_id = request.user.user_id
                 cart_items = service.check_cart_record_service(user_id)
-
-                return render(request, 'commodity_list.html',
-                              {'commoditys': commoditys,
-                               'cart_items': cart_items,
-                               })
+                return render(request, 'commodity_list.html', {'commoditys': commoditys, 'cart_items': cart_items, })
 
         return render(request, 'commodity_list.html', {'commoditys': commoditys, 'cart_items': {}, })
 
@@ -116,8 +111,6 @@ class MyCartView(View):
                 return HttpResponseRedirect(reverse("shopping:login"))
 
 
-
-
 class AddToCartView(View):
     """
     添加商品项到购物车
@@ -180,8 +173,7 @@ class OrderCommitPageView(View):
                 # 选出用户购物车中已经被选中的数据项
                 user_id = request.user.user_id
                 commit_cart_items, coupons = service.commit_order_page_service(user_id)
-                return render(request, 'order_commit_page.html',
-                              {'cart_items': commit_cart_items, 'coupons': coupons})
+                return render(request, 'order_commit_page.html', {'cart_items': commit_cart_items, 'coupons': coupons})
             else:
                 service.logout(request)
 

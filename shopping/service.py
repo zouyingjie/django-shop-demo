@@ -38,7 +38,6 @@ def register_service(request):
     user_pwd = request.POST.get("password")
 
     user = models.User()
-    # user.user_id = uuid.uuid1()
     user.username = user_name
     user.user_email = user_email
     user.user_phone = user_phone
