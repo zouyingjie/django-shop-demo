@@ -12,7 +12,9 @@ from pure_pagination import Paginator, PageNotAnInteger
 
 from shopping import models
 
-PER_PAGE_NUM = 18
+# 每页显示的商品数量
+# PER_PAGE_NUM = 18
+PER_PAGE_NUM = 9
 
 
 # TODO: 用户相关服务
