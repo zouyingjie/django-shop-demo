@@ -14,7 +14,7 @@ from shopping import models
 
 # 每页显示的商品数量
 # PER_PAGE_NUM = 18
-PER_PAGE_NUM = 3
+PER_PAGE_NUM = 6
 
 
 # TODO: 用户相关服务
