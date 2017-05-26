@@ -5,9 +5,6 @@ from django.utils.timezone import now
 
 # Create your models here.
 
-
-
-
 class Commodity(models.Model):
     """
     商品表
@@ -32,7 +29,7 @@ class Commodity(models.Model):
 
 
 class CommodityInfo(models.Model):
-    commodity_id = models.BigIntegerField(unique=True, primary_key=True,null=False, default=0, verbose_name='商品 ID')
+    commodity_id = models.BigIntegerField(unique=True, primary_key=True, null=False, default=0, verbose_name='商品 ID')
     commodity_info = models.TextField(null=False, default='', verbose_name='商品出版信息')
 
     class Meta:
@@ -56,7 +53,7 @@ class User(AbstractUser):
         verbose_name_plural = verbose_name
 
 
-class ReciverInfo(models.Model):
+class ReceiverInfo(models.Model):
     """
     收货地址信息
     """
@@ -157,8 +154,8 @@ class PayInfo(models.Model):
     pay_id = models.BigIntegerField(primary_key=True, null=False, auto_created=True, verbose_name='支付信息 ID')
     order_id = models.BigIntegerField(null=False, verbose_name='订单 ID')
     pay_way = models.SmallIntegerField(null=False, default=1, verbose_name='支付方式')
-    commodity_total_parice = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0.0,
-                                                 verbose_name='商品总额')
+    commodity_total_price = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0.0,
+                                                verbose_name='商品总额')
     accounts_payable = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0.0,
                                            verbose_name='应支付金额')
     delivery_price = models.DecimalField(max_digits=10, decimal_places=2, null=False, default=0.0, verbose_name='运费')
@@ -197,7 +194,7 @@ class PreferentialStrategy(models.Model):
     """
     strategy_id = models.BigIntegerField(primary_key=True, null=False, auto_created=True, verbose_name='优惠策略 ID')
     # 1 折扣  2 满减 3 满X送Y
-    type = models.SmallIntegerField(null=False, verbose_name='优惠类型')
+    coupon_type = models.SmallIntegerField(null=False, verbose_name='优惠类型')
     # 0 - 100 代表打折百分比
     preferential_discount = models.IntegerField(null=False, default=100, verbose_name='折扣百分比')
     # 满减或者满送的起点金额, 类型为折扣时值为-1

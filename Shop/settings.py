@@ -95,14 +95,25 @@ DATABASES = {
 
 }
 
+# CACHES = {
+#     'default': {
+#         # 'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+#         'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
+#         'LOCATION': '47.92.31.4:11211',
+#         'TIMEOUT': 18000,
+#
+#     }
+# }
+
+
 CACHES = {
     'default': {
-        # 'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'BACKEND': 'django.core.cache.backends.memcached.PyLibMCCache',
-        'LOCATION': '47.92.31.4:11211',
-        'TIMEOUT': 18000,
-
-    }
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': '127.0.0.1:6379',
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    },
 }
 
 # Password validation
@@ -141,9 +152,9 @@ USE_TZ = True
 
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
-# STATICFILES_DIRS = (
-#     os.path.join(BASE_DIR, "static"),
-# )
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)

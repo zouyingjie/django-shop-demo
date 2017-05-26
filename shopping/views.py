@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.shortcuts import render_to_response
 
 from shopping.forms import RegisterForm, LoginForm
 from shopping import service
@@ -30,14 +31,14 @@ class CommodityListView(View):
     """
 
     def get(self, request):
-        commoditys = service.get_all_commodity_service(request)
+        commodities = service.get_all_commodity_service(request)
         if request.user.is_authenticated:
             if not request.user.is_superuser:
                 user_id = request.user.user_id
                 cart_items = service.check_cart_record_service(user_id)
-                return render(request, 'commodity_list.html', {'commoditys': commoditys, 'cart_items': cart_items, })
+                return render(request, 'commodity_list.html', {'commodities': commodities, 'cart_items': cart_items, })
 
-        return render(request, 'commodity_list.html', {'commoditys': commoditys, 'cart_items': {}, })
+        return render(request, 'commodity_list.html', {'commodities': commodities, 'cart_items': {}, })
 
 
 # TODO: 用户登录注册请求处理
@@ -52,13 +53,13 @@ class LoginView(View):
     def post(self, request):
         login_form = LoginForm(request.POST)
         if login_form.is_valid():
-            useremail = request.POST.get("useremail", "")
+            user_email = request.POST.get("user_email", "")
             password = request.POST.get("password", "")
-            user = authenticate(request, username=useremail, password=password)
+            user = authenticate(request, username=user_email, password=password)
 
             if user is not None:
                 service.login(request, user)
-                return HttpResponseRedirect(reverse("shopping:commdity_list"))
+                return HttpResponseRedirect(reverse("shopping:commodity_list"))
 
             else:
                 return render(request, "login.html", {"msg": "用户名或密码错误！"})
@@ -73,7 +74,7 @@ class LogoutView(View):
 
     def get(self, request):
         service.logout(request)
-        return HttpResponseRedirect(reverse("shopping:commdity_list"))
+        return HttpResponseRedirect(reverse("shopping:commodity_list"))
 
 
 class RegisterView(View):
@@ -108,7 +109,7 @@ class MyCartView(View):
                 return render(request, 'my_cart.html', data)
             else:
                 service.logout(request)
-                return HttpResponseRedirect(reverse("shopping:login"))
+        return HttpResponseRedirect(reverse("shopping:login"))
 
 
 class AddToCartView(View):
@@ -195,6 +196,10 @@ class OrderCommitOperationView(View):
 
                 service.generate_order_service(user_id, coupon_id, total_price, discount_price)
                 return HttpResponseRedirect(reverse("shopping:order_commit_success"))
+            else:
+                service.logout(request)
+
+        return HttpResponseRedirect(reverse("shopping:login"))
 
 
 class OrderCommitSuccessView(View):
@@ -218,6 +223,9 @@ class OrderCancelOperationView(View):
                 user_id = request.user.user_id
                 service.cancel_order_service(user_id)
                 return HttpResponseRedirect(reverse("shopping:my_cart"))
+            else:
+                service.logout(request)
+        return HttpResponseRedirect(reverse("shopping:login"))
 
 
 class ChangeCartItemQuantityView(View):
@@ -247,15 +255,15 @@ class CouponPageView(View):
 
 
 class TakeCouponViw(View):
-    '''
+    """
     领取购物券操作
-    '''
+    """
 
     def post(self, request):
 
         if request.user.is_authenticated:
-            type = request.POST.get('type', "")
-            if service.take_coupon_service(request.user.user_id, type):
+            coupon_type = request.POST.get('coupon_type', "")
+            if service.take_coupon_service(request.user.user_id, coupon_type):
                 return JsonResponse({'statue': '200'})
 
         return JsonResponse({'statue': '404'})
@@ -263,7 +271,6 @@ class TakeCouponViw(View):
 
 # 全局 404 配置
 def page_not_found(request):
-    from django.shortcuts import render_to_response
     response = render_to_response('404.html', {})
     response.status_code = 404
     return response
@@ -271,7 +278,6 @@ def page_not_found(request):
 
 # 全局 500 配置
 def page_error(request):
-    from django.shortcuts import render_to_response
     response = render_to_response('500.html', {})
     response.status_code = 500
     return response

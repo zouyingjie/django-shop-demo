@@ -168,7 +168,7 @@
             type: 'POST',
             dataType: 'json',
             data: {
-                'type': $(this).attr('coupon_type')
+                'coupon_type': $(this).attr('coupon_type')
             },
             success: function (data) {
                 if (data['statue'] == 200) {

@@ -37,7 +37,7 @@
                 </div>
             {% endif %}
         </div>
-        {% for commodity in commoditys.object_list %}
+        {% for commodity in commodities.object_list %}
 
             <div class="col-xs-6 col-md-4" style="margin-top: 25px;height: 360px">
                 <a href="{% url 'shopping:commdity_detail' commodity.commodity_id %}" style="text-decoration: none">
@@ -55,15 +55,15 @@
             <div class="pageturn">
                 <ul class="pagelist">
 
-                    {% if commoditys.has_previous %}
+                    {% if commodities.has_previous %}
                         <li class="long"><a
-                                href="?{{ commoditys.previous_page_number.querystring }}"
+                                href="?{{ commodities.previous_page_number.querystring }}"
                                 class="prev">&lsaquo;&lsaquo;上一页</a>
                         </li>
                     {% endif %}
-                    {% for page in commoditys.pages %}
+                    {% for page in commodities.pages %}
                         {% if page %}
-                            {% ifequal page commoditys.number %}
+                            {% ifequal page commodities.number %}
                                 <li class="active"><a class=" current page"
                                                       href="">{{ page }}</a>
                                 </li>
@@ -74,8 +74,8 @@
                             <li class="none"><a href="">...</a></li>
                         {% endif %}
                     {% endfor %}
-                    {% if commoditys.has_next %}
-                        <li class="long"><a href="?{{ commoditys.next_page_number.querystring }}"
+                    {% if commodities.has_next %}
+                        <li class="long"><a href="?{{ commodities.next_page_number.querystring }}"
                                             class="next"> 下一页&rsaquo;&rsaquo;</a></li>
                     {% endif %}
 

@@ -14,6 +14,8 @@ from shopping import models
 
 # 每页显示的商品数量
 # PER_PAGE_NUM = 18
+
+
 PER_PAGE_NUM = 3
 
 
@@ -77,7 +79,12 @@ def add_to_cart_service(commodity_id, user_id):
     commodity = models.Commodity.objects.get(pk=commodity_id)
 
     cart_items = models.Cart.objects.filter(commodity_id=commodity_id, user_id=user_id)
-    if len(cart_items) == 0:
+    if not cart_items:
+        old_item = cart_items[0]
+        old_item.quantity += 1
+        old_item.total_price = old_item.total_price + commodity.price
+        old_item.save()
+    else:
         new_cart_item = models.Cart()
         new_cart_item.commodity_id = commodity_id
         new_cart_item.user_id = user_id
@@ -87,11 +94,6 @@ def add_to_cart_service(commodity_id, user_id):
         new_cart_item.title = commodity.title
         new_cart_item.pic1 = commodity.pic1
         new_cart_item.save()
-    else:
-        old_item = cart_items[0]
-        old_item.quantity = old_item.quantity + 1
-        old_item.total_price = old_item.total_price + commodity.price
-        old_item.save()
 
 
 def cart_account_service(cart_item_ids):
@@ -109,7 +111,9 @@ def cart_account_service(cart_item_ids):
 def change_cart_quantity_service(user_id, commodity_id, quantity):
     """
     修改购物车中商品的数量
-    :param cart_item_ids:
+    :param quantity:
+    :param commodity_id:
+    :param user_id:
     :return:
     """
     cart_item = models.Cart.objects.filter(user_id=user_id, commodity_id=commodity_id).first()
@@ -141,16 +145,17 @@ def commit_order_page_service(user_id):
     user_to_coupons = list(models.UserToCoupon.objects.filter(user_id=user_id))
 
     # 获取未过期的优惠券
-    unexpire_user_tp_coupons = [x for x in user_to_coupons if x.end_time > timezone.now()]
+    unexpired_user_tp_coupons = [x for x in user_to_coupons if x.end_time > timezone.now()]
 
     # 根据未过期未使用的用户券关系获取到所有的优惠券
     coupons = list()
-    if len(unexpire_user_tp_coupons) > 0:
-        for unexpire_user_tp_coupon in unexpire_user_tp_coupons:
-            coupon = models.Coupon.objects.filter(coupon_id=unexpire_user_tp_coupon.coupon_id,
+    if not unexpired_user_tp_coupons:
+        for unexpired_user_tp_coupon in unexpired_user_tp_coupons:
+            coupon = models.Coupon.objects.filter(coupon_id=unexpired_user_tp_coupon.coupon_id,
                                                   statue=2).first()
             if coupon is not None:
                 coupons.append(coupon)
+
     return commit_cart_items, coupons
 
 
@@ -226,15 +231,15 @@ def get_all_commodity_service(request):
     :return: 返回商品列表
     """
 
+    commodities = models.Commodity.objects.all()
     try:
         page = request.GET.get('page', 1)
     except PageNotAnInteger:
         page = 1
 
-    all_commoditys = models.Commodity.objects.all()
-    p = Paginator(all_commoditys, PER_PAGE_NUM, request=request)
-    commoditys = p.page(page)
-    return commoditys
+    p = Paginator(commodities, PER_PAGE_NUM, request=request)
+    commodities = p.page(page)
+    return commodities
 
 
 def get_commodity_detail_service(commodity_id):
@@ -243,30 +248,29 @@ def get_commodity_detail_service(commodity_id):
     :return: 返回商品和商品信息
     """
     commodity = models.Commodity.objects.get(pk=commodity_id)
-    commodity_info = models.CommodityInfo.objects.get(commodity_id=commodity_id).commodity_info.replace('\'', '').split(
-        ',')
-
+    commodity_info = models.CommodityInfo.objects.get(commodity_id=commodity_id).commodity_info
+    commodity_info = commodity_info.replace('\'', '').split(',')
     return commodity, commodity_info
 
 
-def take_coupon_service(user_id, type):
+def take_coupon_service(user_id, coupon_type):
     """
     领取优惠券服务
     :param user_id:
-    :param type:
+    :param coupon_type:
     :return: 返回领取结果
     """
-    strategies = models.PreferentialStrategy.objects.filter(type=type)
+    strategies = models.PreferentialStrategy.objects.filter(coupon_type=coupon_type)
     coupons = models.Coupon.objects.filter(strategy_id=strategies[0].strategy_id, statue=1)
     coupon_list = list(coupons.all())
-    if len(coupon_list) > 0:
+    if not coupon_list:
         coupon = coupon_list[0]
-        userToCoupon = models.UserToCoupon()
-        userToCoupon.user_id = user_id
-        userToCoupon.coupon_id = coupon.coupon_id
-        userToCoupon.start_time = datetime.datetime.now()
-        userToCoupon.end_time = userToCoupon.start_time + datetime.timedelta(days=coupon.expire_time)
-        userToCoupon.save()
+        user_to_coupon = models.UserToCoupon()
+        user_to_coupon.user_id = user_id
+        user_to_coupon.coupon_id = coupon.coupon_id
+        user_to_coupon.start_time = datetime.datetime.now()
+        user_to_coupon.end_time = user_to_coupon.start_time + datetime.timedelta(days=coupon.expire_time)
+        user_to_coupon.save()
         coupon.statue = 2
         coupon.save()
         return True
