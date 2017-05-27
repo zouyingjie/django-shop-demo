@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 import random
 import datetime
-
 from decimal import Decimal
+
 from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.utils import timezone
-
 from pure_pagination import Paginator, PageNotAnInteger
 
 from shopping import models
 
 # 每页显示的商品数量
-# PER_PAGE_NUM = 18
-
-
-PER_PAGE_NUM = 3
-
+PER_PAGE_NUM = 18
 
 # TODO: 用户相关服务
 def login_service(request, user):
@@ -27,6 +22,7 @@ def login_service(request, user):
     :param user:
     :return:
     """
+
     login(request, user)
 
 
@@ -55,6 +51,7 @@ def logout_service(request):
     :param request:
     :return:
     """
+
     logout(request)
 
 
@@ -66,8 +63,8 @@ def check_cart_record_service(user_id):
     查看购物车商品服务
     :return:
     """
-    cart_items = models.Cart.objects.filter(user_id=user_id)
 
+    cart_items = models.Cart.objects.filter(user_id=user_id)
     return cart_items
 
 
@@ -77,8 +74,8 @@ def add_to_cart_service(commodity_id, user_id):
     """
 
     commodity = models.Commodity.objects.get(pk=commodity_id)
-
     cart_items = models.Cart.objects.filter(commodity_id=commodity_id, user_id=user_id)
+
     if not cart_items:
         old_item = cart_items[0]
         old_item.quantity += 1
@@ -102,6 +99,7 @@ def cart_account_service(cart_item_ids):
     :param cart_item_ids:
     :return:
     """
+
     for cart_item_id in cart_item_ids:
         cart_item = models.Cart.objects.get(pk=cart_item_id)
         cart_item.has_check = 1  # 代表被选中进行结算
@@ -116,6 +114,7 @@ def change_cart_quantity_service(user_id, commodity_id, quantity):
     :param user_id:
     :return:
     """
+
     cart_item = models.Cart.objects.filter(user_id=user_id, commodity_id=commodity_id).first()
     cart_item.quantity = quantity
     cart_item.total_price = cart_item.price * Decimal(cart_item.quantity)
@@ -128,6 +127,7 @@ def delete_cart_commodity_service(user_id, commodity_id):
     从购物车删除服务
     :return:
     """
+
     cart_item = models.Cart.objects.filter(commodity_id=commodity_id, user_id=user_id)[0]
     cart_item.delete()
 
@@ -138,6 +138,7 @@ def commit_order_page_service(user_id):
     :param user_id:
     :return: 返回提交的商品项和可用的优惠券
     """
+
     # cart = models.Cart.objects.get(user_id=user_id)
     commit_cart_items = models.Cart.objects.filter(user_id=user_id, has_check=1)
 
@@ -208,6 +209,7 @@ def cancel_order_service(user_id):
     订单取消服务
     :return:
     """
+
     commit_cart_items = models.Cart.objects.filter(user_id=user_id, has_check=1)
 
     for items in commit_cart_items:
@@ -247,6 +249,7 @@ def get_commodity_detail_service(commodity_id):
     获取商品详情服务
     :return: 返回商品和商品信息
     """
+
     commodity = models.Commodity.objects.get(pk=commodity_id)
     commodity_info = models.CommodityInfo.objects.get(commodity_id=commodity_id).commodity_info
     commodity_info = commodity_info.replace('\'', '').split(',')
@@ -260,6 +263,7 @@ def take_coupon_service(user_id, coupon_type):
     :param coupon_type:
     :return: 返回领取结果
     """
+
     strategies = models.PreferentialStrategy.objects.filter(coupon_type=coupon_type)
     coupons = models.Coupon.objects.filter(strategy_id=strategies[0].strategy_id, statue=1)
     coupon_list = list(coupons.all())

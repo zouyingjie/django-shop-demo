@@ -91,7 +91,6 @@ class RegisterView(View):
         if register_form.is_valid():
             service.register_service(request)
             return render(request, 'login.html')
-
         else:
             return render(request, 'register.html', {'register_form': register_form})
 
@@ -99,6 +98,11 @@ class RegisterView(View):
 # TODO: 购物车相关请求处理
 class MyCartView(View):
     def get(self, request):
+        """
+        查看购物车
+        :param request:
+        :return:
+        """
 
         data = dict()
         if request.user.is_authenticated():
@@ -121,9 +125,7 @@ class AddToCartView(View):
         if request.user.is_authenticated():
             user_id = request.user.user_id
             commodity_id = request.POST.get('commodity_id')
-
             service.add_to_cart_service(commodity_id, user_id)
-
             return JsonResponse({'statue': 'success'})
         else:
             return render(request, 'login.html')
@@ -170,14 +172,12 @@ class OrderCommitPageView(View):
     def get(self, request):
         if request.user.is_authenticated:
             if not request.user.is_superuser:
-
                 # 选出用户购物车中已经被选中的数据项
                 user_id = request.user.user_id
                 commit_cart_items, coupons = service.commit_order_page_service(user_id)
                 return render(request, 'order_commit_page.html', {'cart_items': commit_cart_items, 'coupons': coupons})
             else:
                 service.logout(request)
-
         return HttpResponseRedirect(reverse("shopping:login"))
 
 
@@ -193,7 +193,6 @@ class OrderCommitOperationView(View):
                 coupon_id = request.POST.get('coupon_id', '')
                 total_price = request.POST.get('total_price', '')
                 discount_price = request.POST.get('discount_price', '')
-
                 service.generate_order_service(user_id, coupon_id, total_price, discount_price)
                 return HttpResponseRedirect(reverse("shopping:order_commit_success"))
             else:
@@ -229,10 +228,13 @@ class OrderCancelOperationView(View):
 
 
 class ChangeCartItemQuantityView(View):
+    """
+    修改购物车商品数量
+    """
+
     def post(self, request):
         commodity_id = request.POST['commodity_id']
         quantity = request.POST['quantity']
-
         user_id = request.user.user_id
         cart_item = service.change_cart_quantity_service(user_id, commodity_id, quantity)
         return JsonResponse({'price': cart_item.total_price})
@@ -250,7 +252,6 @@ class CouponPageView(View):
                 return render(request, 'coupon.html')
             else:
                 service.logout(request)
-
         return HttpResponseRedirect(reverse("shopping:login"))
 
 
@@ -260,12 +261,10 @@ class TakeCouponViw(View):
     """
 
     def post(self, request):
-
         if request.user.is_authenticated:
             coupon_type = request.POST.get('coupon_type', "")
             if service.take_coupon_service(request.user.user_id, coupon_type):
                 return JsonResponse({'statue': '200'})
-
         return JsonResponse({'statue': '404'})
 
 
